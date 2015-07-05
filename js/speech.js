@@ -19,6 +19,15 @@ function parsePhase0(s) {
 			out += ch;
 		}
 	}
+	return out;
+}
+
+function parsePhase1(s) {
+	var out = "";
+	
+  // Take out URLs
+  var urlRegex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+  out = s.replace(urlRegex, "{LINK}");
 	
 	return out;
 }
@@ -26,6 +35,9 @@ function parsePhase0(s) {
 function getChunks(s) {
 	// First pass, convert/handle commas around currency, and various special characters
 	s = parsePhase0(s);
+	
+	// Second pass, take out URLs, etc
+	s = parsePhase1(s);
 	
 	// Chunk up the data
 	var chunkList = [];
