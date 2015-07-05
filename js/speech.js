@@ -1,6 +1,9 @@
 function parsePhase0(s) {
 	var out = "";
 	
+	// Convert soft-hyphen to a dash
+	s = s.replace(/\u00AD/g, '-');
+	
 	// Convert currency like "$1,000"  to "$1000"
 	for(var i = 0; i < s.length; i++) {
 		var ch = s.charAt(i);
