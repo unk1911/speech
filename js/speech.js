@@ -1,5 +1,6 @@
 //var CHUNK_SIZE = 125;
-var CHUNK_SIZE = 1024;
+var DEFAULT_CHUNK_SIZE = 125;
+var US_CHUNK_SIZE = 1024;
 
 function parsePhase0(s) {
 	var out = "";
@@ -35,6 +36,19 @@ function parsePhase1(s) {
 	return out;
 }
 
+function getChunkSize() {
+	var cs = DEFAULT_CHUNK_SIZE;
+	var voiceSelect = $("#voice");
+	var selectedVoice = null;
+	if(voiceSelect) {
+		selectedVoice = voiceSelect.val();
+		if(selectedVoice == 'native') {
+			cs = US_CHUNK_SIZE;
+		}
+	}
+	return cs;
+}
+
 function getChunks(s) {
 	// First pass, convert/handle commas around currency, and various special characters
 	s = parsePhase0(s);
@@ -44,7 +58,7 @@ function getChunks(s) {
 	
 	// Chunk up the data
 	var chunkList = [];
-	chunkList = chunker(s, CHUNK_SIZE);
+	chunkList = chunker(s, getChunkSize());
 	return chunkList;
 }
 				
