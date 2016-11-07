@@ -1,10 +1,11 @@
-//var CHUNK_SIZE = 125;
 var DEFAULT_CHUNK_SIZE = 125;
 var US_CHUNK_SIZE = 1024;
+var voiceLang2Name = [];
+var prevTaVal = "";
 
 function parsePhase0(s) {
 	var out = "";
-        s = s.replace(/\u00AD/g, '-');
+	s = s.replace(/\u00AD/g, '-');
 	
 	// Convert currency like "$1,000" to "$1000"
 	for(var i = 0; i < s.length; i++) {
@@ -18,7 +19,6 @@ function parsePhase0(s) {
 			} else {
 				out += ch;
 			}
-		} else if(false) {
 		} else {
 			out += ch;
 		}
@@ -29,9 +29,9 @@ function parsePhase0(s) {
 function parsePhase1(s) {
 	var out = "";
 	
-  	// Take out URLs
-  	var urlRegex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-  	out = s.replace(urlRegex, "{LINK}");
+  // Take out URLs
+  var urlRegex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+  out = s.replace(urlRegex, "{LINK}");
 	
 	return out;
 }
@@ -65,12 +65,11 @@ function getChunks(s) {
 function chunker(s, max) {
 	var chunks = [];
 	var l = [];
-	//l = s.split(/\.\s+|\n|,/);  // Split on: (period, comma, carriage-return)
 	l = s.split(/\n/);  // Split on <CR>
 	for(var i = 0; i < l.length; i++) {
 		var chunk = l[i];
 		if(chunk == '') {
-	    	continue;
+			continue;
 	  }
 	  var siz = chunk.length;
 	  if(siz <= max) {
@@ -112,7 +111,7 @@ function initSpeech() {
 	if('speechSynthesis' in window) {
 		smsg = "Your browser <strong>supports</strong> speech synthesis.";
 	} else {
-    		smsg = 'Sorry your browser <strong>does not support</strong> speech synthesis.<br>Try this in <a href="http://www.google.co.uk/intl/en/chrome/browser/canary.html">Chrome Canary</a>.';
+		smsg = 'Sorry your browser <strong>does not support</strong> speech synthesis.<br>Try this in <a href="http://www.google.co.uk/intl/en/chrome/browser/canary.html">Chrome Canary</a>.';
 	}
 	$("#statusMsg").html(smsg);
 	return false;
@@ -124,51 +123,53 @@ function doInitVoices() {
 	var voices = window.speechSynthesis.getVoices();
 	voices.forEach(function (voice, i) {
 	 	var voiceName = voice.name;
+	 	var voiceLang = voice.lang;
 		var selected = '';
 		if(voiceName == 'native') {
 			selected = 'selected';
 		}
 		var option = "<option value='" + voiceName + "' " + selected + " >" + voiceName + "</option>";
 		voiceSelect.append(option);
+		voiceLang2Name[voiceLang] = voiceName;
 	});
+	$('.voption option[value="native"]').prop('selected', 'selected').change();
 	return false;
 }
 
 function doTTS() {
-        var taInput = $("#taInput").val();
+	var taInput = $("#taInput").val();
 	var t = taInput.toLowerCase();
 	if(t.startsWith("http:") || t.startsWith("https:")) {
 		var url = taInput;
 		$.blockUI({ 
 			css: { 
-            			border: 'none', 
-            			padding: '15px', 
-            			backgroundColor: '#000', 
-            			'-webkit-border-radius': '10px', 
-            			'-moz-border-radius': '10px', 
-            			opacity: .5, 
-            			color: '#fff' 
-        		},		
+				border: 'none', 
+				padding: '15px', 
+				backgroundColor: '#000', 
+				'-webkit-border-radius': '10px', 
+				'-moz-border-radius': '10px', 
+				opacity: .5, 
+				color: '#fff' 
+      },
 			message: "<h3>Processing...</h3>" 
 		});
 		$.ajax({
 		    type: "GET",
 		    url: "db.php?url=" + url,
 		    success: function (data) {
-			$.unblockUI();
-			$("#taInput").val(data);
-			$("#taInput").attr("rows", "20");
-			$("#taInput").css("height", "500px");
-			$("#doTTS").click();
+					$.unblockUI();
+					$("#taInput").val(data);
+					$("#taInput").attr("rows", "20");
+					$("#taInput").css("height", "500px");
+					$("#doTTS").click();
 		    }
 		});
 	} else {
-		var chunkList = getChunks(taInput);
-		chunkList.forEach(function(chunk) {
-			doSpeak(chunk);
+			var chunkList = getChunks(taInput);
+			chunkList.forEach(function(chunk) {
+				doSpeak(chunk);
 		});
 	}
-
 	return false;
 }
 
@@ -182,25 +183,19 @@ function doSpeak(s) {
 	var msg = new SpeechSynthesisUtterance();
 	
 	// If the user had selected a voice, use it...
-  	if(selectedVoice) {
+	if(selectedVoice) {
 		msg.voice = window.speechSynthesis.getVoices().filter(function(voice) {
-	  		return voice.name == selectedVoice;
-	  	})[0];
+				return voice.name == selectedVoice;
+	  })[0];
 	} 
   
 	var rate = parseInt($("#rate").val());
-	//console.log("Set rate=" + rate);
 	msg.rate = rate; // 0.1 to 10
 	
 	var pitch = parseInt($("#pitch").val());
-	//console.log("Set pitch=" + pitch);
 	msg.pitch = pitch; // 0 to 2
 	msg.text = s;
-	
-	//msg.onend = function(e) {
-	//  console.log('elapsedTime=' + e.elapsedTime + ',timeStamp=' + e.timeStamp);
-	//};
-	
+		
 	// Now speak...
 	window.speechSynthesis.speak(msg);
 	return false;
@@ -223,4 +218,54 @@ function doStop() {
 	pauseResume = 'R';
 	window.speechSynthesis.cancel();
 	return false;
+}
+
+function match(lang) {
+	for(var key in voiceLang2Name) {
+		if (voiceLang2Name.hasOwnProperty(key)) {
+			var val = voiceLang2Name[key];
+			var cc = key.substr(0, 2);
+			if(lang == cc) {
+				var optRef = '.voption option[value="' + val + '"]';
+				$(optRef).prop('selected', 'selected').change();
+				break;
+			}
+		}
+	}
+}
+
+function doLangId() {
+  var input = $("#taInput").val();
+  request = $.ajax({
+    url: "lang.php",
+    type: "post",
+    data: {'input': input}
+  });
+  request.done(function (response, textStatus, jqXHR){
+    var obj = JSON.parse(response);
+    var rc = obj['rc'];
+    if(rc != 0) {
+      return false;
+    }
+    var payload = obj['payload'];
+    var algoResponse = payload['algoResponse'];
+    var resultJson = algoResponse['resultJson'];
+    var lang = JSON.parse(resultJson);
+    match(lang);
+  });
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    console.error("Error: " + textStatus, errorThrown);
+  });
+}
+
+
+function doTextAreaChange(val) {
+	if(prevTaVal.length < val.length) {
+		if(val.startsWith("http:") || val.startsWith("https:")) {
+			// Do nothing if it's a link
+		} else {
+			doLangId();
+		}
+	}
+	prevTaVal = val;
 }

@@ -13,6 +13,7 @@
 		<script src="jquery/jquery-1.11.3.min.js"></script>
 		<script src="jquery/jquery.mobile-1.4.5.min.js"></script>
 		<script src="blockui/jquery.blockUI.js"></script>
+		<script src="js/algorithmia-0.2.0.js" type="text/javascript"></script>
 		<script src="js/speech.js?ver=0.2" type="text/javascript"></script>
 		
 		<script>
@@ -20,6 +21,7 @@
 			$(document).ready(function(){
 				$("#doClear").click(function() {
 					$("#taInput").val("");
+					$('.voption option[value="native"]').prop('selected', 'selected').change();
 					return false;
 				});
 				
@@ -33,9 +35,18 @@
 					return false;
 				});
 				
+				$("#doLangId").click(function() {
+					doLangId();
+					return false;
+				});
+				
 				$("#doTTS").click(function() {
 					doTTS();
 					return false;
+				});
+				
+				$("#taInput").bind('input propertychange', function() {
+				  doTextAreaChange(this.value);
 				});
 			});
 			
@@ -53,6 +64,7 @@
 					<input type='button' id='doPauseResume' value='Pause/Resume'/>
 					<input type='button' id='doStop' value='Stop'/>
 					<input type='button' id='doClear' value='Clear'/>
+					<!-- <input type='button' id='doLangId' value='LangId'/> -->
 			  	</center>
 			</div>
 		
@@ -63,7 +75,7 @@
 			  	</fieldset>
 			  <div id='statusMsg'></div>
 			  
-			  <div class="option">
+			  <div class="option voption">
 			  	<label for="rate">Voice</label>
 			  	<select id='voice' name='voice'>
 			  	</select>
